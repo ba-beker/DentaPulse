@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "pnpm install --frozen-lockfile --filter \"@dentapulse/web...\"",
+  "buildCommand": "pnpm run build",
+  "regions": ["cdg1"],
+  "functions": {
+    "app/**/*.{ts,tsx}": {
+      "maxDuration": 30
+    }
+  }
+}
