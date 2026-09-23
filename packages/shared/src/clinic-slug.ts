@@ -1,0 +1,32 @@
+/** URL segments owned by the product, not by a cabinet. */
+export const RESERVED_CLINIC_SLUGS: ReadonlySet<string> = new Set([
+  "admin",
+  "api",
+  "app",
+  "assets",
+  "auth",
+  "billing",
+  "book",
+  "booking",
+  "cabinet",
+  "cron",
+  "dashboard",
+  "demo",
+  "docs",
+  "health",
+  "help",
+  "invite",
+  "login",
+  "onboarding",
+  "public",
+  "rdv",
+  "settings",
+  "signup",
+  "static",
+  "status",
+  "support",
+  "webhooks",
+  "www",
+]);
+
+export const CLINIC_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

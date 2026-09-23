@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: #fafafa;
+}
+
+:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.ordonnance-print {
+  display: none;
+}
+
+@page {
+  size: A4;
+  margin: 16mm;
+}
+
+@media print {
+  body > *:not(.ordonnance-print) {
+    display: none !important;
+  }
+
+  .ordonnance-print {
+    display: block !important;
+    color: #18181b;
+    background: #fff;
+  }
+}

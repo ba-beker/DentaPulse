@@ -1,0 +1,196 @@
+Software Requirements & Project Description1. Project Title & Executive SummaryProject Name: DentaPulse (or Client-Branded Medical Suite)Target Audience: Dental clinics (cabinets dentaires), general practitioners, and dental surgeons.Core Value Proposition: An all-in-one practice management system (PMS) combining client acquisition/booking, electronic medical records (EMR) with dynamic dental charting, and automated consumable inventory tracking.The platform features a dynamic personalization engine: passing a practice/doctor name in the URL path or query params automatically injects bespoke branding across the client-facing and demo interfaces.2. Technical Stack ArchitectureFrontend: Next.js (App Router), Tailwind CSS, Lucide Icons, Shadcn UI / Radix primitives.Backend: Node.js (Express or Fastify) handling RESTful endpoints and WebSocket connections.Database: MongoDB with Mongoose ODM (utilizing ACID Transactions for inventory/clinical operations).Development Tooling: Cursor AI for modular component generation and clean controller design.┌─────────────────────────────────────────────────────────────────────────────┐
+│                          Next.js Frontend Client                            │
+│           (URL Parameter Parsing + Dynamic Branding + Interactive UI)       │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ REST API / JSON
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Node.js (Express/Fastify) Backend                   │
+│     (Controllers, Mongoose Transactions, Business Logic & Validation)      │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ Mongoose ODM
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           MongoDB Replica Set                               │
+│  (Collections: Clinics, Users, Patients, Consumables, Procedures, Records)  │
+└─────────────────────────────────────────────────────────────────────────────┘
+3. Core Functional ModulesModule A: Patient & Clinical Management (EMR)Interactive Graphical Odontogram:Visual 32-tooth dental map (Adult) and 20-tooth map (Pediatric) rendered using clean SVG components.Click-to-select teeth to assign conditions (caries, missing, crown, endodontic treatment, implant) with distinct color coding.Multi-procedure treatment planning and installment payment tracking.Patient Medical Records:High-priority risk tags displayed prominently on patient profiles (e.g., Penicillin Allergy, Diabetes, Hypertension, Coagulation risks).Digital prescription generator (standardized PDF exports) and radiographic/intraoral image upload per session.Module B: Consumables & Stock Inventory (The Dental Depot)Treatment-Linked Automatic Deduction:Each clinical procedure (e.g., Composite Filling) is pre-configured with a "recipe" of consumables (e.g., 1x Anesthesia Cartridge, 1x Composite Capsule, 1x Etching Gel dose, 2x Microbrushes).Completing a treatment in the EMR triggers an atomic MongoDB transaction deducting exact consumable quantities from stock.Stock Alerts & Expiration Tracking:Threshold-based low-stock warnings (e.g., alert when gloves drop under 5 boxes).Expiration date tracking for high-value chemical consumables (resins, bonding agents, sutures) with UI badge indicators.Supplier Purchase Orders:One-click generation of supplier reorder drafts when items reach minimum safety stock.Module C: Dynamic Personalization & Patient AcquisitionURL-Based Personalization Engine:Ingests practice details dynamically via URL path (/cabinet-dentaire-el-amria) or query params (?doctor=Dr.%20Benali&cabinet=Cabinet%20Dentaire%20El%20Amria).Injects dynamic data across logos, hero headers, clinic specialty tags, and confirmation messages.Patient Self-Booking Engine:3-step online booking flow (Select Procedure $\rightarrow$ Date & Time $\rightarrow$ Patient Details).Native state logic with API endpoints ready for direct Cal.com or external calendar synchronization.Mock WhatsApp/SMS reminder preview illustrating automated patient retention workflows.4. MongoDB Database Schemas (Mongoose Models)JavaScriptimport mongoose from 'mongoose';
+const { Schema } = mongoose;
+
+// 1. Clinic Model (Multi-tenant partition)
+const ClinicSchema = new Schema({
+  slug: { type: String, required: true, unique: true, index: true }, // Used for URL lookup
+  name: { type: String, required: true },
+  doctorName: { type: String, required: true },
+  phone: String,
+  city: String,
+}, { timestamps: true });
+
+// 2. Patient Model
+const PatientSchema = new Schema({
+  clinicId: { type: Schema.Types.ObjectId, ref: 'Clinic', required: true, index: true },
+  fullName: { type: String, required: true },
+  phone: { type: String, required: true },
+  allergies: [{ type: String }],
+  medicalNotes: String,
+}, { timestamps: true });
+
+// 3. Consumable Inventory Model
+const ConsumableSchema = new Schema({
+  clinicId: { type: Schema.Types.ObjectId, ref: 'Clinic', required: true, index: true },
+  name: { type: String, required: true }, // e.g., "Composite Resin A2"
+  unit: { type: String, required: true }, // e.g., "Cartridge", "Box"
+  currentStock: { type: Number, required: true, min: 0 },
+  minStockAlert: { type: Number, default: 5 },
+  costPerUnit: { type: Number, required: true },
+  expirationDate: Date,
+}, { timestamps: true });
+
+// 4. Procedure Recipe Model
+const ProcedureSchema = new Schema({
+  clinicId: { type: Schema.Types.ObjectId, ref: 'Clinic', required: true, index: true },
+  name: { type: String, required: true }, // e.g., "Composite Filling"
+  basePrice: { type: Number, required: true },
+  consumables: [{
+    consumableId: { type: Schema.Types.ObjectId, ref: 'Consumable', required: true },
+    quantityUsed: { type: Number, required: true, default: 1 }
+  }]
+}, { timestamps: true });
+
+// 5. Clinical Record Log
+const ClinicalRecordSchema = new Schema({
+  clinicId: { type: Schema.Types.ObjectId, ref: 'Clinic', required: true, index: true },
+  patientId: { type: Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
+  procedureId: { type: Schema.Types.ObjectId, ref: 'Procedure', required: true },
+  toothNumber: { type: Number }, // FDI notation (11-48)
+  totalBilled: { type: Number, required: true },
+  performedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+export const Clinic = mongoose.model('Clinic', ClinicSchema);
+export const Patient = mongoose.model('Patient', PatientSchema);
+export const Consumable = mongoose.model('Consumable', ConsumableSchema);
+export const Procedure = mongoose.model('Procedure', ProcedureSchema);
+export const ClinicalRecord = mongoose.model('ClinicalRecord', ClinicalRecordSchema);
+5. Node.js Transactional Controller (Atomic Stock Deduction)This Node.js controller guarantees atomic operations using MongoDB Sessions: if stock is insufficient or a record creation fails, all changes rollback seamlessly.JavaScript// controllers/clinicalController.js
+import mongoose from 'mongoose';
+import { Consumable, Procedure, ClinicalRecord } from '../models/schemas.js';
+
+export const completeTreatmentSession = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { clinicId, patientId, procedureId, toothNumber } = req.body;
+
+    // 1. Fetch Procedure & required consumable recipes
+    const procedure = await Procedure.findOne({ _id: procedureId, clinicId }).session(session);
+    if (!procedure) {
+      throw new Error('Procedure not found');
+    }
+
+    // 2. Validate inventory and perform atomic stock deductions
+    for (const recipeItem of procedure.consumables) {
+      const consumable = await Consumable.findOne({ 
+        _id: recipeItem.consumableId, 
+        clinicId 
+      }).session(session);
+
+      if (!consumable || consumable.currentStock < recipeItem.quantityUsed) {
+        throw new Error(`Insufficient inventory for item: ${consumable ? consumable.name : 'Unknown'}`);
+      }
+
+      // Deduct stock
+      consumable.currentStock -= recipeItem.quantityUsed;
+      await consumable.save({ session });
+    }
+
+    // 3. Create the Clinical Record log
+    const record = new ClinicalRecord({
+      clinicId,
+      patientId,
+      procedureId,
+      toothNumber,
+      totalBilled: procedure.basePrice,
+    });
+
+    await record.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(201).json({ success: true, record });
+
+  } catch (error) {
+    // Abort transaction on failure
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+------------
+Design System & UI/UX Guidelines
+1. Aesthetic Direction: "Modern Clinical Slate"
+Look & Feel: High-contrast, clean, and calm. It must feel like an enterprise SaaS (similar to Linear, Vercel, or Stripe) adapted for modern healthcare.
+
+Color Palette:
+
+Primary / Accent: Electric Slate Teal (#0F766E / teal-700) or Deep Indigo (#4338CA) for primary actions and active tooth highlighting.
+
+Backgrounds: Clean neutral canvas (#FAFAFA / zinc-50) with elevated white cards (#FFFFFF) and thin, subtle borders (zinc-200).
+
+Status Badges: Soft muted pills for inventory and appointment states:
+
+In Stock / Confirmed: emerald-50 background with emerald-700 text.
+
+Low Stock / Pending: amber-50 background with amber-700 text.
+
+Out of Stock / Cancelled: rose-50 background with rose-700 text.
+
+Typography: Clean sans-serif like Inter or Plus Jakarta Sans with tabular numbers (font-mono or font-variant-numeric: tabular-nums) for currency, stock counts, and dental FDI tooth numbers.
+
+2. Layout & Interface Architecture
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ┌──────────────┐  Header Bar (Search, Active Doctor Badge, Quick Actions)   │
+│ │              │ ─────────────────────────────────────────────────────────  │
+│ │              │ ┌──────────────────────┐ ┌───────────────────────────────┐ │
+│ │  Collapsed   │ │                      │ │                               │ │
+│ │   Sidebar    │ │   Main Content Area  │ │    Contextual Drawer / Panel  │ │
+│ │  Navigation  │ │  (Odontogram / Grid) │ │  (Patient Quick-view / Stock) │ │
+│ │              │ │                      │ │                               │ │
+│ │              │ └──────────────────────┘ └───────────────────────────────┘ │
+└─┴──────────────┴────────────────────────────────────────────────────────────┘
+Sidebar Navigation: Collapsible, dark or high-contrast sidebar with micro-interactions, active-state indicators, and tooltips.
+
+Card-Based UI (Shadcn UI Style): Zero heavy shadows; use crisp 1px borders (border-zinc-200) and slight rounded corners (rounded-xl).
+
+Slide-over Drawers (Sheets): Instead of opening full new pages for quick tasks (e.g., adding a patient, viewing a tooth history, or adjusting stock), slide out a smooth right-side sheet (Radix UI Dialog/Sheet).
+
+3. Key UI Component Requirements
+Interactive SVG Odontogram
+Visual Representation: Clean vector-based FDI dental chart (Teeth 11–48 and 51–85) rendered with smooth hover states.
+
+Tooth Anatomy Segmentation: Each tooth should be split into 5 distinct interactive SVG regions (Occlusal, Mesial, Distal, Buccal, Lingual) so the dentist can click exact surfaces to log caries or fillings.
+
+Color Coding:
+
+Healthy: zinc-100 / border-zinc-300
+
+Caries / Decay: Soft Coral (#F87171)
+
+Existing Crown / Implant: Metallic Cyan (#38BDF8)
+
+Completed Treatment: Emerald (#34D399)
+
+Consumable Inventory Cards & Tables
+Data Density: Low-row-height data tables with quick-sorting, search filtering, and inline stock increment/decrement controls (+ / - quick buttons for assistants).
+
+Progress Meters: Visual progress bars indicating remaining stock percentage against the minimum alert threshold.
+
+Dynamic Personalization Banner & Public Demo UI
+Floating Preview Glassmorphism: A floating top bar on the demo route:
+
+[✨ Personal Experience Demo prepared for Dr. Benali] [Book Onboarding Call ->]
+Seamless Dynamic Branding: The transition when changing dynamic URL parameters should render smoothly without layout shifts (CLS).

@@ -1,0 +1,50 @@
+---
+description: DentaPulse project brief, stack, engineering, serverless, design, and localisation rules
+alwaysApply: true
+---
+
+PROJECT
+DentaPulse is a multi-tenant dental practice management SaaS: (A) EMR with an interactive SVG odontogram, treatment plans and payments; (B) consumable inventory with automatic, transactional deduction per procedure "recipe"; (C) URL-based personalized public demo and patient self-booking.
+
+STACK
+pnpm monorepo:
+- apps/web: Next.js (App Router), TypeScript strict, Tailwind, shadcn/ui (Radix), lucide-react, TanStack Query.
+- apps/api: Node 20, Express, TypeScript, Mongoose, zod, pino. Deployed to Vercel as serverless Functions.
+- packages/shared: zod schemas, inferred types, constants (FDI teeth, enums) used by BOTH apps.
+- MongoDB Atlas (managed replica set; multi-document transactions are required). NO Docker anywhere in this project: no Dockerfiles, no docker-compose. Local dev connects to an Atlas dev database.
+
+ENGINEERING RULES
+1. TypeScript strict. No `any`. No unused exports.
+2. Multi-tenancy: every tenant-owned document has clinicId. clinicId is ALWAYS read from the authenticated JWT, never from body/params/query. Every query filters by clinicId.
+3. Validate every request (body, params, query) with zod schemas from packages/shared.
+4. Controllers are thin. Business logic lives in services. Services own DB access.
+5. Money is stored as integers. Default currency is DZD, stored as whole dinars (no centimes). Format only through the shared formatDA/formatMoney helpers.
+6. Inventory changes happen ONLY through atomic conditional updates inside a transaction, and always write a StockMovement row.
+7. Errors: a typed AppError with a machine-readable code and HTTP status; one central error handler; never leak stack traces.
+8. Tests: Vitest (unit + integration using mongodb-memory-server in replica-set mode), Playwright for e2e.
+9. Conventional commits. After each task, summarize files changed and how to run and test them.
+
+SERVERLESS RULES (deployment target: Vercel, two projects: web and api)
+10. No in-memory state that matters: no module-level caches for business data, no in-memory rate limiters or lockouts.
+11. No local disk writes. Files go to object storage.
+12. No setInterval, node-cron or background loops. Scheduled work is an HTTP endpoint protected by CRON_SECRET and triggered by Vercel Cron; every scheduled handler must be idempotent (Vercel Cron delivery is best-effort, so missed or duplicate runs happen).
+13. Cache the Mongo connection on globalThis, keep maxPoolSize small, never connect at import time, never disconnect per request.
+14. Keep each request short. Transactions must be brief and contain only DB operations (no network calls, PDF generation or emails inside a transaction).
+15. Every function has an explicit maxDuration; long work is chunked or split.
+
+DESIGN SYSTEM ("Modern Clinical Slate")
+- Canvas zinc-50, cards white with 1px zinc-200 border, rounded-xl, no heavy shadows.
+- Primary teal-700 (#0F766E). Active tooth highlight indigo-700 (#4338CA).
+- Status pills: emerald-50/emerald-700 (in stock, confirmed), amber-50/amber-700 (low, pending), rose-50/rose-700 (out, cancelled).
+- Font: Inter or Plus Jakarta Sans via next/font. Use tabular-nums for currency, stock counts and FDI tooth numbers.
+- Quick tasks (add patient, tooth history, adjust stock) open in a right-side Sheet, not a new page.
+- Zero layout shift: reserve space for anything that loads or changes.
+- Accessibility: keyboard navigable, visible focus rings, aria labels, WCAG AA contrast.
+
+LOCALISATION RULES (target market: Algeria, product language: French)
+16. All user-visible text is FRENCH (formal "vous", sentence case, no anglicisms): interface, validation and error messages, toasts, PDFs, emails, WhatsApp/SMS templates, demo banner. Identifiers (code, DB fields, enum values, API routes) stay in English.
+17. No hardcoded UI strings. Use next-intl message catalogs (apps/web/messages/fr.json), default locale "fr". The API returns stable machine-readable error codes and the web app maps them to French messages. API-generated text (PDFs, reminder templates) uses catalogs in packages/shared.
+18. Formats: dates dd/MM/yyyy, 24-hour time (14:30), space as thousands separator, comma as decimal separator, currency shown as "12 500 DA". Always use the shared formatters (formatDate, formatTime, formatDA); never call Intl inline.
+19. Defaults: country DZ, phone prefix +213, timezone Africa/Algiers, locale fr-DZ, Friday closed (Saturday configurable). All configurable per clinic.
+20. Use Tailwind logical utilities (ms-, me-, ps-, pe-, start-, end-) from day one so Arabic/RTL can be added later without rewrites.
+21. Follow docs/GLOSSAIRE.fr.md for every term.

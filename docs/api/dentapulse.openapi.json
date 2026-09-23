@@ -1,0 +1,6869 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DentaPulse API",
+    "version": "0.1.0",
+    "description": "API REST multi-locataire pour cabinets dentaires. Les schémas de requête proviennent des zod schemas partagés (`@dentapulse/shared`). Documentation disponible uniquement hors production."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Jeton d'accès obtenu via POST /auth/login ou /auth/register-clinic."
+      }
+    },
+    "schemas": {
+      "ApiErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {}
+            },
+            "required": ["code", "message"]
+          }
+        },
+        "required": ["success", "error"]
+      },
+      "ApiSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["success"]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Système"],
+        "responses": {
+          "200": {
+            "description": "État du service et du replica set MongoDB."
+          }
+        }
+      }
+    },
+    "/auth/register-clinic": {
+      "post": {
+        "tags": ["Session"],
+        "requestBody": {
+          "description": "Création de cabinet",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "clinic": {
+                    "type": "object",
+                    "properties": {
+                      "slug": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 63,
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "doctorName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "address": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300
+                      },
+                      "wilaya": {
+                        "type": "integer"
+                      },
+                      "commune": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "phone": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["slug", "name", "doctorName", "address", "wilaya", "commune"],
+                    "additionalProperties": false
+                  },
+                  "owner": {
+                    "type": "object",
+                    "properties": {
+                      "fullName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "email": {
+                        "type": "string",
+                        "maxLength": 254,
+                        "format": "email"
+                      },
+                      "password": {
+                        "type": "string",
+                        "minLength": 8,
+                        "maxLength": 128
+                      }
+                    },
+                    "required": ["fullName", "email", "password"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["clinic", "owner"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Session"],
+        "requestBody": {
+          "description": "Identifiants",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                },
+                "required": ["email", "password"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Session"],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Session"],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/public/clinics/{slug}": {
+      "get": {
+        "tags": ["Réservation publique"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 63,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/public/clinics/{slug}/availability": {
+      "get": {
+        "tags": ["Réservation publique"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 63,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "procedureId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "date",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": false,
+            "name": "dentistId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/public/clinics/{slug}/appointments": {
+      "post": {
+        "tags": ["Réservation publique"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 63,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Prise de rendez-vous en ligne",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "procedureId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "dentistId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "guest": {
+                    "type": "object",
+                    "properties": {
+                      "fullName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "phone": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["fullName", "phone"],
+                    "additionalProperties": false
+                  },
+                  "website": {
+                    "type": "string"
+                  },
+                  "captchaToken": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["procedureId", "dentistId", "start", "guest"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Session"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": ["Temps réel"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": false,
+            "name": "after",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "penicillin_allergy",
+                  "diabetes",
+                  "hypertension",
+                  "coagulation_risk",
+                  "pregnancy",
+                  "cardiac",
+                  "latex_allergy",
+                  "other"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 8
+            },
+            "required": false,
+            "name": "riskTags",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["fullName", "-fullName", "createdAt", "-createdAt"]
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "dateOfBirth": {
+                    "type": "string"
+                  },
+                  "sex": {
+                    "type": "string",
+                    "enum": ["female", "male"]
+                  },
+                  "wilaya": {
+                    "type": "integer"
+                  },
+                  "commune": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "preferredLanguage": {
+                    "type": "string",
+                    "enum": ["fr", "ar"]
+                  },
+                  "insurance": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["none", "cnas", "casnos", "mutuelle", "other"]
+                      },
+                      "number": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50
+                      }
+                    },
+                    "required": ["type"],
+                    "additionalProperties": false
+                  },
+                  "riskTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "penicillin_allergy",
+                        "diabetes",
+                        "hypertension",
+                        "coagulation_risk",
+                        "pregnancy",
+                        "cardiac",
+                        "latex_allergy",
+                        "other"
+                      ]
+                    },
+                    "maxItems": 8
+                  },
+                  "allergies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "maxItems": 30
+                  },
+                  "medicalNotes": {
+                    "type": "string",
+                    "maxLength": 5000
+                  }
+                },
+                "required": ["fullName", "phone"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "dateOfBirth": {
+                    "type": "string"
+                  },
+                  "sex": {
+                    "type": "string",
+                    "enum": ["female", "male"]
+                  },
+                  "wilaya": {
+                    "type": "integer"
+                  },
+                  "commune": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "preferredLanguage": {
+                    "type": "string",
+                    "enum": ["fr", "ar"]
+                  },
+                  "insurance": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["none", "cnas", "casnos", "mutuelle", "other"]
+                      },
+                      "number": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50
+                      }
+                    },
+                    "required": ["type"],
+                    "additionalProperties": false
+                  },
+                  "riskTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "penicillin_allergy",
+                        "diabetes",
+                        "hypertension",
+                        "coagulation_risk",
+                        "pregnancy",
+                        "cardiac",
+                        "latex_allergy",
+                        "other"
+                      ]
+                    },
+                    "maxItems": 8
+                  },
+                  "allergies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "maxItems": 30
+                  },
+                  "medicalNotes": {
+                    "type": "string",
+                    "maxLength": 5000
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/summary": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/risk-tags": {
+      "patch": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "riskTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "penicillin_allergy",
+                        "diabetes",
+                        "hypertension",
+                        "coagulation_risk",
+                        "pregnancy",
+                        "cardiac",
+                        "latex_allergy",
+                        "other"
+                      ]
+                    },
+                    "maxItems": 8
+                  }
+                },
+                "required": ["riskTags"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/allergies": {
+      "patch": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "allergies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "maxItems": 30
+                  }
+                },
+                "required": ["allergies"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/chart": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/chart/teeth/{fdi}": {
+      "patch": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "name": "fdi",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "wholeCondition": {
+                    "type": "string",
+                    "enum": [
+                      "healthy",
+                      "caries",
+                      "filling",
+                      "crown",
+                      "implant",
+                      "missing",
+                      "endodontic",
+                      "bridge",
+                      "fracture",
+                      "extraction_planned"
+                    ]
+                  },
+                  "surfaces": {
+                    "type": "object",
+                    "properties": {
+                      "O": {
+                        "type": "string",
+                        "enum": [
+                          "healthy",
+                          "caries",
+                          "filling",
+                          "crown",
+                          "implant",
+                          "missing",
+                          "endodontic",
+                          "bridge",
+                          "fracture",
+                          "extraction_planned"
+                        ]
+                      },
+                      "I": {
+                        "type": "string",
+                        "enum": [
+                          "healthy",
+                          "caries",
+                          "filling",
+                          "crown",
+                          "implant",
+                          "missing",
+                          "endodontic",
+                          "bridge",
+                          "fracture",
+                          "extraction_planned"
+                        ]
+                      },
+                      "M": {
+                        "type": "string",
+                        "enum": [
+                          "healthy",
+                          "caries",
+                          "filling",
+                          "crown",
+                          "implant",
+                          "missing",
+                          "endodontic",
+                          "bridge",
+                          "fracture",
+                          "extraction_planned"
+                        ]
+                      },
+                      "D": {
+                        "type": "string",
+                        "enum": [
+                          "healthy",
+                          "caries",
+                          "filling",
+                          "crown",
+                          "implant",
+                          "missing",
+                          "endodontic",
+                          "bridge",
+                          "fracture",
+                          "extraction_planned"
+                        ]
+                      },
+                      "B": {
+                        "type": "string",
+                        "enum": [
+                          "healthy",
+                          "caries",
+                          "filling",
+                          "crown",
+                          "implant",
+                          "missing",
+                          "endodontic",
+                          "bridge",
+                          "fracture",
+                          "extraction_planned"
+                        ]
+                      },
+                      "L": {
+                        "type": "string",
+                        "enum": [
+                          "healthy",
+                          "caries",
+                          "filling",
+                          "crown",
+                          "implant",
+                          "missing",
+                          "endodontic",
+                          "bridge",
+                          "fracture",
+                          "extraction_planned"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                },
+                "required": ["version"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/chart/dentition": {
+      "patch": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "dentition": {
+                    "type": "string",
+                    "enum": ["adult", "pediatric", "mixed"]
+                  }
+                },
+                "required": ["version", "dentition"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/teeth/{fdi}/history": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "name": "fdi",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/consumables": {
+      "get": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["in_stock", "low", "out", "expiring_soon", "expired"]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "-name",
+                "currentStock",
+                "-currentStock",
+                "expirationDate",
+                "-expirationDate",
+                "createdAt",
+                "-createdAt"
+              ]
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "sku": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "unit": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "currentStock": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minStockAlert": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "maxStockLevel": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "costPerUnit": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "expirationDate": {
+                    "type": "string"
+                  },
+                  "supplierId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "lotNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                },
+                "required": ["name", "category", "unit", "costPerUnit"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/consumables/{consumableId}": {
+      "get": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "consumableId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "consumableId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "sku": {
+                    "type": ["string", "null"],
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "unit": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "minStockAlert": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "maxStockLevel": {
+                    "type": ["number", "null"],
+                    "minimum": 0
+                  },
+                  "costPerUnit": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "expirationDate": {
+                    "type": ["string", "null"]
+                  },
+                  "supplierId": {
+                    "type": ["string", "null"],
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "lotNumber": {
+                    "type": ["string", "null"],
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "consumableId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/consumables/{consumableId}/adjust": {
+      "post": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "consumableId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "delta": {
+                    "type": "integer"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": ["purchase_receipt", "manual_adjustment", "waste", "expiry"]
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": ["delta", "reason"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/consumables/{consumableId}/movements": {
+      "get": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "consumableId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/inventory/alerts": {
+      "get": {
+        "tags": ["Stock"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/purchase-orders/generate-drafts": {
+      "post": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/purchase-orders": {
+      "get": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "sent", "received", "cancelled"]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{purchaseOrderId}": {
+      "get": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "purchaseOrderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "purchaseOrderId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "updates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "consumableId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000000
+                        }
+                      },
+                      "required": ["consumableId", "quantity"],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 200
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-fA-F0-9]{24}$"
+                    },
+                    "maxItems": 200
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "purchaseOrderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{purchaseOrderId}/send": {
+      "post": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "purchaseOrderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{purchaseOrderId}/export": {
+      "get": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "purchaseOrderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{purchaseOrderId}/receive": {
+      "post": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "purchaseOrderId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "consumableId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "receivedQty": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000000
+                        },
+                        "lotNumber": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "expirationDate": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["consumableId", "receivedQty"],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 200
+                  }
+                },
+                "required": ["items"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/suppliers": {
+      "get": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "whatsapp": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/suppliers/{supplierId}": {
+      "get": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "supplierId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "supplierId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "phone": {
+                    "type": ["string", "null"]
+                  },
+                  "email": {
+                    "type": ["string", "null"],
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "whatsapp": {
+                    "type": ["string", "null"]
+                  },
+                  "notes": {
+                    "type": ["string", "null"],
+                    "maxLength": 2000
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Achats"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "supplierId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/procedures": {
+      "get": {
+        "tags": ["Actes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "active",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Actes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "basePrice": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "durationMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1440
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "consumables": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "consumableId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "quantityUsed": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 10000
+                        }
+                      },
+                      "required": ["consumableId", "quantityUsed"],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 40,
+                    "default": []
+                  }
+                },
+                "required": ["name", "basePrice", "durationMinutes", "category"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/procedures/{procedureId}": {
+      "get": {
+        "tags": ["Actes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Actes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "code": {
+                    "type": ["string", "null"],
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "basePrice": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "durationMinutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1440
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "consumables": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "consumableId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "quantityUsed": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 10000
+                        }
+                      },
+                      "required": ["consumableId", "quantityUsed"],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 40
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Actes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/procedures/{procedureId}/cost-analysis": {
+      "get": {
+        "tags": ["Actes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/procedures/{procedureId}/preview-deduction": {
+      "post": {
+        "tags": ["Actes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "procedureId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/appointments": {
+      "get": {
+        "tags": ["Rendez-vous"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": false,
+            "name": "dentistId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Rendez-vous"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "dentistId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "procedureId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": ["patientId", "dentistId", "procedureId", "start", "end"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}": {
+      "patch": {
+        "tags": ["Rendez-vous"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "appointmentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "confirmed", "completed", "cancelled", "no_show"]
+                  },
+                  "dentistId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "procedureId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Rendez-vous"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "appointmentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}/reschedule": {
+      "post": {
+        "tags": ["Rendez-vous"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "appointmentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "dentistId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  }
+                },
+                "required": ["start", "end"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/payments": {
+      "get": {
+        "tags": ["Facturation"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Facturation"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "treatmentPlanId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "cash",
+                      "cheque",
+                      "bank_transfer",
+                      "ccp",
+                      "card_cib",
+                      "card_edahabia",
+                      "other"
+                    ]
+                  },
+                  "installmentNo": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "paidAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": ["patientId", "treatmentPlanId", "amount", "method", "installmentNo"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/financials/summary": {
+      "get": {
+        "tags": ["Facturation"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/clinical-records": {
+      "get": {
+        "tags": ["Clinique"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Clinique"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "procedureId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "toothNumber": {
+                    "type": "integer"
+                  },
+                  "surfaces": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["O", "I", "M", "D", "B", "L"]
+                    },
+                    "maxItems": 6
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 5000
+                  }
+                },
+                "required": ["patientId", "procedureId"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/clinical-records/{recordId}": {
+      "get": {
+        "tags": ["Clinique"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "recordId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/clinical/complete-treatment": {
+      "post": {
+        "tags": ["Clinique"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "procedureId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "toothNumber": {
+                    "type": "integer"
+                  },
+                  "surfaces": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["O", "I", "M", "D", "B", "L"]
+                    },
+                    "maxItems": 6
+                  },
+                  "treatmentPlanItemId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  "allowExpired": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["patientId", "procedureId"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/treatment-plans": {
+      "post": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "discount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000000,
+                    "default": 0
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "procedureId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "toothNumber": {
+                          "type": "integer"
+                        },
+                        "surfaces": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["O", "I", "M", "D", "B", "L"]
+                          },
+                          "maxItems": 5,
+                          "default": []
+                        },
+                        "price": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100000000
+                        },
+                        "sequence": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000
+                        }
+                      },
+                      "required": ["procedureId", "sequence"],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 40
+                  }
+                },
+                "required": ["items"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/treatment-plans/{treatmentPlanId}": {
+      "patch": {
+        "tags": ["Plans de traitement"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "treatmentPlanId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "discount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "add": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "procedureId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "toothNumber": {
+                          "type": "integer"
+                        },
+                        "surfaces": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["O", "I", "M", "D", "B", "L"]
+                          },
+                          "maxItems": 5,
+                          "default": []
+                        },
+                        "price": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100000000
+                        },
+                        "sequence": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000
+                        }
+                      },
+                      "required": ["procedureId", "sequence"],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 40
+                  },
+                  "remove": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-fA-F0-9]{24}$"
+                    },
+                    "minItems": 1,
+                    "maxItems": 40
+                  },
+                  "reorder": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "itemId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{24}$"
+                        },
+                        "sequence": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000
+                        }
+                      },
+                      "required": ["itemId", "sequence"],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 40
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/treatment-plans/{treatmentPlanId}/installments": {
+      "post": {
+        "tags": ["Plans de traitement"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "treatmentPlanId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60
+                  },
+                  "firstDueDate": {
+                    "type": "string"
+                  },
+                  "interval": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 366
+                  }
+                },
+                "required": ["count", "firstDueDate", "interval"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/treatment-plans/{treatmentPlanId}/quote": {
+      "post": {
+        "tags": ["Plans de traitement"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "treatmentPlanId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "validUntil": {
+                    "type": "string"
+                  }
+                },
+                "required": ["validUntil"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/payments/{paymentId}/reverse": {
+      "post": {
+        "tags": ["Facturation"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "paymentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/payments/{paymentId}/receipt": {
+      "get": {
+        "tags": ["Facturation"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "paymentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/balance": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/reports/revenue": {
+      "get": {
+        "tags": ["Facturation"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["day", "month", "procedure", "dentist"]
+            },
+            "required": true,
+            "name": "groupBy",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/drugs": {
+      "get": {
+        "tags": ["Ordonnances"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Ordonnances"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dci": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "brand": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "aliases": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "maxItems": 8
+                  }
+                },
+                "required": ["dci"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/drugs/{drugId}": {
+      "patch": {
+        "tags": ["Ordonnances"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-fA-F0-9]{24}|catalog:[a-z0-9-]{1,64})$"
+            },
+            "required": true,
+            "name": "drugId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dci": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "brand": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "aliases": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "maxItems": 8
+                  }
+                },
+                "required": ["dci"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Ordonnances"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-fA-F0-9]{24}|catalog:[a-z0-9-]{1,64})$"
+            },
+            "required": true,
+            "name": "drugId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/prescriptions": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "drug": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "dci": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "brand": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "dosage": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "duration": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        },
+                        "instructions": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        }
+                      },
+                      "required": ["drug", "dosage", "duration"],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 10
+                  },
+                  "acknowledgeWarnings": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["items"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/prescriptions/{prescriptionId}/pdf": {
+      "get": {
+        "tags": ["Ordonnances"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "prescriptionId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["a5", "a4"]
+            },
+            "required": false,
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/attachments": {
+      "get": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/attachments/presign": {
+      "post": {
+        "tags": ["Patients"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Corps JSON",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fileName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 180
+                  },
+                  "mime": {
+                    "type": "string",
+                    "enum": ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20971520
+                  },
+                  "clinicalRecordId": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{24}$"
+                  },
+                  "toothNumber": {
+                    "type": "integer"
+                  }
+                },
+                "required": ["fileName", "mime", "size"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/attachments/{attachmentId}/confirm": {
+      "post": {
+        "tags": ["Pièces jointes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "attachmentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    },
+    "/attachments/{attachmentId}": {
+      "get": {
+        "tags": ["Pièces jointes"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$"
+            },
+            "required": true,
+            "name": "attachmentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Sans contenu"
+          },
+          "400": {
+            "description": "Validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Interdit"
+          },
+          "404": {
+            "description": "Introuvable"
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}
