@@ -3,11 +3,16 @@
     "title": "DentaPulse",
     "description": "Démonstration de gestion de cabinet dentaire"
   },
+  "Brand": {
+    "name": "DentaPulse",
+    "space": "Espace cabinet"
+  },
   "Banner": {
-    "personalized": "Démonstration personnalisée préparée pour {doctor}",
+    "badge": "Démonstration",
+    "personalized": "Préparé pour {doctor} — les modifications restent sur cet appareil",
     "generic": "Démonstration interactive — les modifications restent sur cet appareil",
-    "book": "Prendre rendez-vous",
-    "reset": "Réinitialiser la démonstration",
+    "book": "Voir la prise de rendez-vous",
+    "reset": "Réinitialiser",
     "resetConfirm": "Effacer les modifications locales et restaurer les données d'exemple ?"
   },
   "Nav": {
@@ -62,6 +67,7 @@
     "prescriptionWarnings": "Des alertes médicales doivent être confirmées avant d'enregistrer l'ordonnance."
   },
   "Dashboard": {
+    "eyebrow": "Aujourd'hui",
     "title": "Tableau de bord",
     "subtitle": "Activité du cabinet et alertes de stock",
     "patients": "Patients",
@@ -198,6 +204,9 @@
     "eyebrow": "Prise de rendez-vous en ligne",
     "title": "Réserver une consultation",
     "subtitle": "Choisissez un acte, un créneau, puis vos coordonnées.",
+    "pointSchedule": "Créneaux proposés selon l'agenda du cabinet",
+    "pointConfirm": "Le secrétariat confirme chaque demande",
+    "pointReminder": "Un rappel est préparé avant le rendez-vous",
     "stepProcedure": "Acte",
     "stepSlot": "Créneau",
     "stepDetails": "Vos informations",

@@ -3,7 +3,21 @@
 import { appointmentStatusLabels, formatDate, formatTime } from "@dentapulse/shared";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { Button, Card, Field, Select, Sheet, StatusPill, TextInput } from "../../components/ui";
+import {
+  Button,
+  Card,
+  Field,
+  Notice,
+  PageHeader,
+  Select,
+  Sheet,
+  StatusPill,
+  tableHeadClass,
+  tdClass,
+  TextInput,
+  thClass,
+  trClass,
+} from "../../components/ui";
 import { useDemo } from "../../lib/demo/context";
 import { errorMessageKey } from "../../lib/demo/errors";
 import type { AppointmentRecord } from "../../lib/demo/types";
@@ -30,31 +44,29 @@ export default function AgendaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Agenda.title")}</h1>
-          <p className="mt-1 text-sm text-zinc-600">{t("Agenda.subtitle")}</p>
-        </div>
-        <Button onClick={() => setOpen(true)}>{t("Agenda.add")}</Button>
-      </header>
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+      <PageHeader
+        title={t("Agenda.title")}
+        subtitle={t("Agenda.subtitle")}
+        actions={<Button onClick={() => setOpen(true)}>{t("Agenda.add")}</Button>}
+      />
+      {message ? <Notice tone="ok">{message}</Notice> : null}
+      {error ? <Notice tone="bad">{error}</Notice> : null}
 
       <Card className="overflow-x-auto p-0">
         <table className="min-w-full text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-500">
+          <thead className={tableHeadClass}>
             <tr>
-              <th className="px-4 py-3 text-start font-medium">{t("Common.date")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Agenda.patient")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Agenda.procedure")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Common.status")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Common.actions")}</th>
+              <th className={thClass}>{t("Common.date")}</th>
+              <th className={thClass}>{t("Agenda.patient")}</th>
+              <th className={thClass}>{t("Agenda.procedure")}</th>
+              <th className={thClass}>{t("Common.status")}</th>
+              <th className={thClass}>{t("Common.actions")}</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td className="px-4 py-8 text-zinc-500" colSpan={5}>
+                <td className="px-4 py-10 text-zinc-500" colSpan={5}>
                   {t("Agenda.empty")}
                 </td>
               </tr>
@@ -63,19 +75,19 @@ export default function AgendaPage() {
                 const patient = actions.lookupPatient(row.patientId);
                 const procedure = actions.lookupProcedure(row.procedureId);
                 return (
-                  <tr key={row.id} className="border-b border-zinc-100 last:border-0">
-                    <td className="px-4 py-3 tabular-nums">
+                  <tr key={row.id} className={trClass}>
+                    <td className={`${tdClass} tabular-nums`}>
                       {formatDate(new Date(row.start))} {formatTime(new Date(row.start))}
                     </td>
-                    <td className="px-4 py-3">{patient?.fullName}</td>
-                    <td className="px-4 py-3">{procedure?.name}</td>
-                    <td className="px-4 py-3">
+                    <td className={`${tdClass} font-medium text-zinc-950`}>{patient?.fullName}</td>
+                    <td className={tdClass}>{procedure?.name}</td>
+                    <td className={tdClass}>
                       <StatusPill
                         label={appointmentStatusLabels[row.status]}
                         tone={appointmentTone(row.status)}
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={tdClass}>
                       <div className="flex flex-wrap gap-2">
                         {row.status === "pending" ? (
                           <Button

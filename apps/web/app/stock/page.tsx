@@ -10,7 +10,22 @@ import {
 } from "@dentapulse/shared";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { Button, Card, Field, Select, Sheet, StatusPill, TextInput } from "../../components/ui";
+import {
+  Button,
+  Card,
+  Field,
+  Notice,
+  PageHeader,
+  SearchInput,
+  Select,
+  Sheet,
+  StatusPill,
+  tableHeadClass,
+  tdClass,
+  TextInput,
+  thClass,
+  trClass,
+} from "../../components/ui";
 import { useDemo } from "../../lib/demo/context";
 import { errorMessageKey } from "../../lib/demo/errors";
 import type { ConsumableRecord } from "../../lib/demo/types";
@@ -41,15 +56,13 @@ export default function StockPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Stock.title")}</h1>
-          <p className="mt-1 text-sm text-zinc-600">{t("Stock.subtitle")}</p>
-        </div>
-        <Button onClick={() => setCreating(true)}>{t("Stock.add")}</Button>
-      </header>
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-      <TextInput
+      <PageHeader
+        title={t("Stock.title")}
+        subtitle={t("Stock.subtitle")}
+        actions={<Button onClick={() => setCreating(true)}>{t("Stock.add")}</Button>}
+      />
+      {message ? <Notice tone="ok">{message}</Notice> : null}
+      <SearchInput
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder={t("Common.search")}
@@ -58,13 +71,13 @@ export default function StockPage() {
 
       <Card className="overflow-x-auto p-0">
         <table className="min-w-full text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-500">
+          <thead className={tableHeadClass}>
             <tr>
-              <th className="px-4 py-3 text-start font-medium">{t("Common.name")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Stock.current")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Stock.min")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Common.status")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("Common.actions")}</th>
+              <th className={thClass}>{t("Common.name")}</th>
+              <th className={thClass}>{t("Stock.current")}</th>
+              <th className={thClass}>{t("Stock.min")}</th>
+              <th className={thClass}>{t("Common.status")}</th>
+              <th className={thClass}>{t("Common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -75,19 +88,19 @@ export default function StockPage() {
                 row.expirationDate ? new Date(`${row.expirationDate}T12:00:00+01:00`) : null,
               );
               return (
-                <tr key={row.id} className="border-b border-zinc-100 last:border-0">
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{row.name}</p>
+                <tr key={row.id} className={trClass}>
+                  <td className={tdClass}>
+                    <p className="font-medium text-zinc-950">{row.name}</p>
                     <p className="text-xs text-zinc-500">{row.category}</p>
                   </td>
-                  <td className="px-4 py-3 tabular-nums">
+                  <td className={`${tdClass} tabular-nums`}>
                     {row.currentStock} {row.unit}
                   </td>
-                  <td className="px-4 py-3 tabular-nums">{row.minStockAlert}</td>
-                  <td className="px-4 py-3">
+                  <td className={`${tdClass} tabular-nums`}>{row.minStockAlert}</td>
+                  <td className={tdClass}>
                     <StatusPill label={stockStatusLabels[status]} tone={tone(status)} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={tdClass}>
                     <Button variant="secondary" onClick={() => setAdjusting(row)}>
                       {t("Stock.adjust")}
                     </Button>

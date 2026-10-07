@@ -28,10 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body
-        className={`${sans.className} bg-zinc-50 text-zinc-900 antialiased`}
-        suppressHydrationWarning
-      >
+      <body className={`${sans.className} text-zinc-900 antialiased`} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <AppProviders>
             <Suspense fallback={null}>

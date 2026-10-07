@@ -7,10 +7,11 @@ import {
   formatTime,
   stockStatusLabels,
 } from "@dentapulse/shared";
+import { Banknote, CalendarDays, Package, Users, Wallet } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo } from "react";
-import { Card, StatusPill } from "../components/ui";
+import { Card, PageHeader, StatCard, StatusPill } from "../components/ui";
 import { useDemo } from "../lib/demo/context";
 
 function stockTone(status: string): "ok" | "warn" | "bad" {
@@ -38,62 +39,70 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-zinc-600">{t("subtitle")}</p>
-      </header>
+      <PageHeader
+        eyebrow={`${t("eyebrow")} · ${formatDate(new Date())}`}
+        title={state.clinic.name}
+        subtitle={`${state.clinic.doctorName} — ${t("subtitle")}`}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <p className="text-sm text-zinc-500">{t("patients")}</p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">{state.patients.length}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-zinc-500">{t("todayAppointments")}</p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">{upcoming.length}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-zinc-500">{t("revenue")}</p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">{formatDA(paid)}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-zinc-500">{t("outstanding")}</p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">
-            {formatDA(Math.max(0, billed - paid))}
-          </p>
-        </Card>
+        <StatCard
+          label={t("patients")}
+          value={String(state.patients.length)}
+          icon={<Users className="size-4" aria-hidden />}
+        />
+        <StatCard
+          label={t("todayAppointments")}
+          value={String(upcoming.length)}
+          icon={<CalendarDays className="size-4" aria-hidden />}
+        />
+        <StatCard
+          label={t("revenue")}
+          value={formatDA(paid)}
+          icon={<Banknote className="size-4" aria-hidden />}
+        />
+        <StatCard
+          label={t("outstanding")}
+          value={formatDA(Math.max(0, billed - paid))}
+          icon={<Wallet className="size-4" aria-hidden />}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold">{t("upcoming")}</h2>
-            <Link href="/agenda" className="text-sm text-teal-700">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="font-semibold text-zinc-950">{t("upcoming")}</h2>
+            <Link href="/agenda" className="text-sm font-medium text-teal-800 hover:text-teal-950">
               {t("openApp")}
             </Link>
           </div>
           {upcoming.length === 0 ? (
-            <p className="text-sm text-zinc-500">{t("noUpcoming")}</p>
+            <p className="py-6 text-sm text-zinc-500">{t("noUpcoming")}</p>
           ) : (
             <ul className="divide-y divide-zinc-100">
               {upcoming.map((row) => {
                 const patient = actions.lookupPatient(row.patientId);
                 const procedure = actions.lookupProcedure(row.procedureId);
                 return (
-                  <li key={row.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                    <div>
-                      <p className="font-medium">{patient?.fullName ?? "—"}</p>
-                      <p className="text-zinc-500">{procedure?.name}</p>
+                  <li key={row.id} className="flex items-center gap-3 py-3 text-sm">
+                    <div className="flex w-16 shrink-0 flex-col items-center rounded-xl bg-zinc-50 px-2 py-1.5 text-center">
+                      <span className="text-[11px] text-zinc-500">
+                        {formatDate(new Date(row.start)).slice(0, 5)}
+                      </span>
+                      <span className="font-semibold text-zinc-950 tabular-nums">
+                        {formatTime(new Date(row.start))}
+                      </span>
                     </div>
-                    <div className="text-end">
-                      <p className="tabular-nums">
-                        {formatDate(new Date(row.start))} {formatTime(new Date(row.start))}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-zinc-950">
+                        {patient?.fullName ?? "—"}
                       </p>
-                      <StatusPill
-                        label={appointmentStatusLabels[row.status]}
-                        tone={row.status === "confirmed" ? "ok" : "warn"}
-                      />
+                      <p className="truncate text-zinc-500">{procedure?.name}</p>
                     </div>
+                    <StatusPill
+                      label={appointmentStatusLabels[row.status]}
+                      tone={row.status === "confirmed" ? "ok" : "warn"}
+                    />
                   </li>
                 );
               })}
@@ -102,21 +111,24 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold">{t("alerts")}</h2>
-            <Link href="/stock" className="text-sm text-teal-700">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 font-semibold text-zinc-950">
+              <Package className="size-4 text-teal-700" aria-hidden />
+              {t("alerts")}
+            </h2>
+            <Link href="/stock" className="text-sm font-medium text-teal-800 hover:text-teal-950">
               {t("openApp")}
             </Link>
           </div>
           {alerts.length === 0 ? (
-            <p className="text-sm text-zinc-500">{t("noAlerts")}</p>
+            <p className="py-6 text-sm text-zinc-500">{t("noAlerts")}</p>
           ) : (
             <ul className="divide-y divide-zinc-100">
               {alerts.map((row) => (
                 <li key={row.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <div>
-                    <p className="font-medium">{row.name}</p>
-                    <p className="tabular-nums text-zinc-500">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-zinc-950">{row.name}</p>
+                    <p className="text-zinc-500 tabular-nums">
                       {row.currentStock} {row.unit}
                     </p>
                   </div>

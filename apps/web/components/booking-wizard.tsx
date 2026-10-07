@@ -56,21 +56,43 @@ export function BookingWizard({
       address,
     });
     return (
-      <Card className="mx-auto max-w-xl">
+      <Card className="mx-auto w-full max-w-xl">
         <p className="text-sm font-medium text-emerald-700">{t("Booking.success")}</p>
-        <div className="mt-4 rounded-lg bg-zinc-50 p-4 text-sm text-zinc-700">
-          <p className="font-medium">{t("Booking.reminder")}</p>
-          <p className="mt-2">{reminder}</p>
+        <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+          <p className="font-medium text-zinc-950">{t("Booking.reminder")}</p>
+          <p className="mt-2 leading-6">{reminder}</p>
         </div>
-        <Link href="/" className="mt-6 inline-flex text-sm font-medium text-teal-700">
+        <Link
+          href="/"
+          className="mt-6 inline-flex text-sm font-medium text-teal-800 hover:text-teal-950"
+        >
           {t("Booking.openCabinet")}
         </Link>
       </Card>
     );
   }
 
+  const steps = [t("Booking.stepProcedure"), t("Booking.stepSlot"), t("Booking.stepDetails")];
+
   return (
-    <Card className="mx-auto max-w-xl">
+    <Card className="mx-auto w-full max-w-xl">
+      <ol className="mb-6 grid grid-cols-3 gap-2">
+        {steps.map((label, index) => {
+          const number = index + 1;
+          const current = step === number;
+          const done = step > number;
+          return (
+            <li key={label}>
+              <div
+                className={`mb-2 h-1 rounded-full ${done || current ? "bg-teal-700" : "bg-zinc-200"}`}
+              />
+              <p className={`text-xs font-medium ${current ? "text-teal-800" : "text-zinc-500"}`}>
+                {label}
+              </p>
+            </li>
+          );
+        })}
+      </ol>
       {error ? <p className="mb-4 text-sm text-rose-700">{error}</p> : null}
       {step === 1 ? (
         <div className="flex flex-col gap-4">
@@ -106,10 +128,10 @@ export function BookingWizard({
                   key={slot.start}
                   type="button"
                   onClick={() => setSlotStart(slot.start)}
-                  className={`rounded-lg border px-3 py-2 text-sm tabular-nums ${
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-medium tabular-nums ${
                     slotStart === slot.start
-                      ? "border-indigo-700 bg-indigo-50 text-indigo-800"
-                      : "border-zinc-200 bg-white"
+                      ? "border-teal-700 bg-teal-700 text-white"
+                      : "border-zinc-200 bg-white text-zinc-800 hover:border-teal-700 hover:text-teal-800"
                   }`}
                 >
                   {formatTime(new Date(slot.start))}

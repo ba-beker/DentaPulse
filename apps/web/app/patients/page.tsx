@@ -5,7 +5,18 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PatientForm } from "../../components/patient-form";
-import { Button, Card, Sheet, StatusPill, TextInput } from "../../components/ui";
+import {
+  Button,
+  Card,
+  PageHeader,
+  SearchInput,
+  Sheet,
+  StatusPill,
+  tableHeadClass,
+  tdClass,
+  thClass,
+  trClass,
+} from "../../components/ui";
 import { useDemo } from "../../lib/demo/context";
 
 export default function PatientsPage() {
@@ -30,15 +41,13 @@ export default function PatientsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Patients.title")}</h1>
-          <p className="mt-1 text-sm text-zinc-600">{t("Patients.subtitle")}</p>
-        </div>
-        <Button onClick={() => setOpen(true)}>{t("Patients.add")}</Button>
-      </header>
+      <PageHeader
+        title={t("Patients.title")}
+        subtitle={t("Patients.subtitle")}
+        actions={<Button onClick={() => setOpen(true)}>{t("Patients.add")}</Button>}
+      />
 
-      <TextInput
+      <SearchInput
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder={t("Common.search")}
@@ -47,34 +56,37 @@ export default function PatientsPage() {
 
       <Card className="overflow-x-auto p-0">
         <table className="min-w-full text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-start text-zinc-500">
+          <thead className={tableHeadClass}>
             <tr>
-              <th className="px-4 py-3 font-medium">{t("Common.name")}</th>
-              <th className="px-4 py-3 font-medium">{t("Common.phone")}</th>
-              <th className="px-4 py-3 font-medium">{t("Patients.commune")}</th>
-              <th className="px-4 py-3 font-medium">{t("Patients.risks")}</th>
+              <th className={thClass}>{t("Common.name")}</th>
+              <th className={thClass}>{t("Common.phone")}</th>
+              <th className={thClass}>{t("Patients.commune")}</th>
+              <th className={thClass}>{t("Patients.risks")}</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td className="px-4 py-8 text-zinc-500" colSpan={4}>
+                <td className="px-4 py-10 text-zinc-500" colSpan={4}>
                   {t("Patients.empty")}
                 </td>
               </tr>
             ) : (
               rows.map((patient) => (
-                <tr key={patient.id} className="border-b border-zinc-100 last:border-0">
-                  <td className="px-4 py-3">
-                    <Link href={`/patients/${patient.id}`} className="font-medium text-teal-800">
+                <tr key={patient.id} className={trClass}>
+                  <td className={tdClass}>
+                    <Link
+                      href={`/patients/${patient.id}`}
+                      className="font-medium text-teal-800 hover:text-teal-950"
+                    >
                       {patient.fullName}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 tabular-nums">
+                  <td className={`${tdClass} tabular-nums`}>
                     {formatNational(patient.phone) ?? patient.phone}
                   </td>
-                  <td className="px-4 py-3">{patient.commune}</td>
-                  <td className="px-4 py-3">
+                  <td className={tdClass}>{patient.commune}</td>
+                  <td className={tdClass}>
                     <div className="flex flex-wrap gap-1">
                       {patient.riskTags.map((tag) => (
                         <StatusPill key={tag} label={riskTagLabels[tag]} tone="warn" />

@@ -4,6 +4,7 @@ import {
   dentitionLabels,
   formatDA,
   formatDate,
+  formatNational,
   recordedPaymentMethodLabels,
   stockStatusLabels,
   toothConditionLabels,
@@ -11,6 +12,7 @@ import {
   type RecordedPaymentMethod,
   type ToothCondition,
 } from "@dentapulse/shared";
+import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -18,9 +20,24 @@ import { useMemo, useState } from "react";
 import { Odontogram } from "../../../components/odontogram";
 import { PatientForm } from "../../../components/patient-form";
 import { PrescriptionPanel } from "../../../components/prescription-panel";
-import { Button, Card, Field, Select, Sheet, TextInput } from "../../../components/ui";
+import {
+  Button,
+  Card,
+  Field,
+  Notice,
+  Select,
+  Sheet,
+  StatCard,
+  TextInput,
+} from "../../../components/ui";
 import { useDemo } from "../../../lib/demo/context";
 import { errorMessageKey } from "../../../lib/demo/errors";
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const letters = parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase());
+  return letters.join("") || "—";
+}
 
 const CONDITIONS: ToothCondition[] = [
   "healthy",
@@ -62,14 +79,28 @@ export default function PatientDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <Link href="/patients" className="text-sm text-teal-700">
+      <div className="flex flex-col gap-4">
+        <Link
+          href="/patients"
+          className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-teal-800 hover:text-teal-950"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
           {t("Common.back")}
         </Link>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{patient.fullName}</h1>
-            <p className="mt-1 text-sm text-zinc-600">{patient.phone}</p>
+        <Card className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-700 text-sm font-semibold text-white">
+              {initials(patient.fullName)}
+            </span>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
+                {patient.fullName}
+              </h1>
+              <p className="mt-1 text-sm text-zinc-600">
+                {formatNational(patient.phone) ?? patient.phone}
+                {patient.commune ? ` · ${patient.commune}` : ""}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => setRxOpen(true)}>{t("Prescription.new")}</Button>
@@ -88,11 +119,11 @@ export default function PatientDetailPage() {
               {t("Common.delete")}
             </Button>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+      {message ? <Notice tone="ok">{message}</Notice> : null}
+      {error ? <Notice tone="bad">{error}</Notice> : null}
 
       <PrescriptionPanel
         patient={patient}
@@ -105,22 +136,9 @@ export default function PatientDetailPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <p className="text-sm text-zinc-500">{t("Patient.billed")}</p>
-          <p className="mt-2 text-xl font-semibold tabular-nums">
-            {formatDA(balance?.billed ?? 0)}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-sm text-zinc-500">{t("Patient.paid")}</p>
-          <p className="mt-2 text-xl font-semibold tabular-nums">{formatDA(balance?.paid ?? 0)}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-zinc-500">{t("Patient.outstanding")}</p>
-          <p className="mt-2 text-xl font-semibold tabular-nums">
-            {formatDA(balance?.outstanding ?? 0)}
-          </p>
-        </Card>
+        <StatCard label={t("Patient.billed")} value={formatDA(balance?.billed ?? 0)} />
+        <StatCard label={t("Patient.paid")} value={formatDA(balance?.paid ?? 0)} />
+        <StatCard label={t("Patient.outstanding")} value={formatDA(balance?.outstanding ?? 0)} />
       </div>
 
       <Card>
