@@ -10,7 +10,7 @@ import type {
   TreatmentStatus,
 } from "@dentapulse/shared";
 
-export const DEMO_STATE_VERSION = 2 as const;
+export const DEMO_STATE_VERSION = 3 as const;
 
 export interface ClinicRecord {
   id: string;

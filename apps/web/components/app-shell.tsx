@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { useDemo } from "../lib/demo/context";
+import { useDisplayedClinic } from "./branding-bridge";
 import { BrandMark } from "./ui";
 
 const LINKS = [
@@ -24,7 +25,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const t = useTranslations("Nav");
   const brand = useTranslations("Brand");
-  const { ready, state } = useDemo();
+  const { ready } = useDemo();
+  const clinic = useDisplayedClinic();
   const [open, setOpen] = useState(false);
 
   if (isPublicPath(pathname)) {
@@ -36,7 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen min-w-0 overflow-x-clip">
       <div className="flex min-h-screen">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-e border-zinc-200 bg-white md:flex">
           <div className="flex items-center gap-3 px-5 pb-4 pt-5">
@@ -69,8 +71,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="border-t border-zinc-200 px-5 py-4">
-            <p className="truncate text-sm font-medium text-zinc-950">{state.clinic.name}</p>
-            <p className="truncate text-xs text-zinc-500">{state.clinic.doctorName}</p>
+            <p className="text-sm font-medium text-pretty break-words text-zinc-950">
+              {clinic.name}
+            </p>
+            {clinic.doctorName ? (
+              <p className="text-xs text-pretty break-words text-zinc-500">{clinic.doctorName}</p>
+            ) : null}
           </div>
         </aside>
 
@@ -80,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <BrandMark className="size-8" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-zinc-950">{brand("name")}</p>
-                <p className="truncate text-xs text-zinc-500">{state.clinic.name}</p>
+                <p className="truncate text-xs text-zinc-500">{clinic.name}</p>
               </div>
             </div>
             <button
@@ -115,7 +121,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               })}
             </nav>
           ) : null}
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</div>
+          <div className="mx-auto w-full min-w-0 max-w-6xl px-4 py-6 pb-24 sm:px-6 sm:py-8">
+            {children}
+          </div>
         </div>
       </div>
     </div>

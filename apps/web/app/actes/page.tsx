@@ -3,6 +3,7 @@
 import { analyzeProcedureCost, formatDA } from "@dentapulse/shared";
 import { useTranslations } from "next-intl";
 import { Card, PageHeader } from "../../components/ui";
+import { QuantityText } from "../../components/quantity";
 import { useDemo } from "../../lib/demo/context";
 
 export default function ProceduresPage() {
@@ -56,7 +57,7 @@ export default function ProceduresPage() {
                       key={line.consumableId}
                       className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700"
                     >
-                      {item?.name} · {line.quantityUsed} {item?.unit}
+                      {item?.name} · <QuantityText count={line.quantityUsed} unit={item?.unit} />
                     </li>
                   );
                 })}

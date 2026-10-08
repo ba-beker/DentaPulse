@@ -141,7 +141,15 @@ export function resetDemoStore(): void {
 export function updateClinic(
   patch: Partial<Pick<DemoState["clinic"], "name" | "doctorName" | "phone" | "commune">>,
 ): void {
-  state = { ...state, clinic: { ...state.clinic, ...patch } };
+  const users =
+    patch.doctorName !== undefined
+      ? state.users.map((user) =>
+          user.role === "dentist"
+            ? { ...user, fullName: patch.doctorName?.trim() || "Chirurgien-dentiste" }
+            : user,
+        )
+      : state.users;
+  state = { ...state, users, clinic: { ...state.clinic, ...patch } };
   emit();
 }
 

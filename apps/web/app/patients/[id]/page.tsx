@@ -8,6 +8,7 @@ import {
   recordedPaymentMethodLabels,
   stockStatusLabels,
   toothConditionLabels,
+  wilayaByCode,
   type Dentition,
   type RecordedPaymentMethod,
   type ToothCondition,
@@ -32,6 +33,7 @@ import {
 } from "../../../components/ui";
 import { useDemo } from "../../../lib/demo/context";
 import { errorMessageKey } from "../../../lib/demo/errors";
+import { QuantityText } from "../../../components/quantity";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -99,6 +101,7 @@ export default function PatientDetailPage() {
               <p className="mt-1 text-sm text-zinc-600">
                 {formatNational(patient.phone) ?? patient.phone}
                 {patient.commune ? ` · ${patient.commune}` : ""}
+                {wilayaByCode(patient.wilaya) ? ` · ${wilayaByCode(patient.wilaya)?.nameFr}` : ""}
               </p>
             </div>
           </div>
@@ -389,7 +392,7 @@ function CompleteCareForm({
                 <li key={line.consumableId} className="flex justify-between gap-2">
                   <span>{item?.name}</span>
                   <span className={short ? "text-rose-700" : ""}>
-                    {line.quantity} {item?.unit}
+                    <QuantityText count={line.quantity} unit={item?.unit} />
                     {short ? ` · ${stockStatusLabels.out}` : ""}
                   </span>
                 </li>

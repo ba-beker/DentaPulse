@@ -15,7 +15,7 @@ export function PatientForm({ patient, onDone }: { patient?: PatientRecord; onDo
   const [fullName, setFullName] = useState(patient?.fullName ?? "");
   const [phone, setPhone] = useState(patient?.phone ?? "");
   const [commune, setCommune] = useState(patient?.commune ?? "");
-  const [wilaya, setWilaya] = useState(String(patient?.wilaya ?? 31));
+  const [wilaya, setWilaya] = useState(String(patient?.wilaya ?? 46));
   const [dateOfBirth, setDateOfBirth] = useState(patient?.dateOfBirth ?? "");
   const [allergies, setAllergies] = useState(patient?.allergies.join(", ") ?? "");
   const [medicalNotes, setMedicalNotes] = useState(patient?.medicalNotes ?? "");

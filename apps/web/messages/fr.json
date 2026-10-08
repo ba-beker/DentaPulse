@@ -9,7 +9,7 @@
   },
   "Banner": {
     "badge": "Démonstration",
-    "personalized": "Préparé pour {doctor} — les modifications restent sur cet appareil",
+    "personalized": "Préparé pour {clinic} — les modifications restent sur cet appareil",
     "generic": "Démonstration interactive — les modifications restent sur cet appareil",
     "book": "Voir la prise de rendez-vous",
     "reset": "Réinitialiser",
@@ -75,11 +75,22 @@
     "lowStock": "Alertes de stock",
     "revenue": "Encaissements",
     "outstanding": "Reste à payer",
+    "outstandingHint": "Couronnes, implants et échéances non réglées. C'est l'argent à relancer.",
     "upcoming": "Prochains rendez-vous",
     "noUpcoming": "Aucun rendez-vous à venir.",
     "alerts": "Stock à surveiller",
     "noAlerts": "Aucun article en alerte.",
-    "openApp": "Ouvrir le cabinet"
+    "openApp": "Ouvrir le cabinet",
+    "owes": "Patients qui doivent de l'argent",
+    "noOwes": "Aucun reste à payer.",
+    "chase": "Relancer",
+    "chased": "Relancé",
+    "recall": "Patients à rappeler",
+    "noRecall": "Aucun contrôle dû ni plan abandonné.",
+    "checkupDue": "Contrôle dû",
+    "abandoned": "Plan abandonné",
+    "chaseTitle": "Relance WhatsApp",
+    "sent": "Message préparé. L'équipe peut l'envoyer sur WhatsApp."
   },
   "Patients": {
     "title": "Patients",
@@ -189,7 +200,13 @@
     "confirm": "Confirmer",
     "complete": "Marquer comme terminé",
     "cancelAppt": "Annuler le rendez-vous",
-    "empty": "Aucun rendez-vous sur cette période."
+    "empty": "Aucun rendez-vous sur cette période.",
+    "day": "Jour",
+    "week": "Semaine",
+    "today": "Aujourd'hui",
+    "previous": "Période précédente",
+    "next": "Période suivante",
+    "closed": "Fermé"
   },
   "Procedures": {
     "title": "Actes",
@@ -206,7 +223,7 @@
     "subtitle": "Choisissez un acte, un créneau, puis vos coordonnées.",
     "pointSchedule": "Créneaux proposés selon l'agenda du cabinet",
     "pointConfirm": "Le secrétariat confirme chaque demande",
-    "pointReminder": "Un rappel est préparé avant le rendez-vous",
+    "pointReminder": "Un rappel WhatsApp en arabe et en français part la veille",
     "stepProcedure": "Acte",
     "stepSlot": "Créneau",
     "stepDetails": "Vos informations",
@@ -218,7 +235,40 @@
     "success": "Votre demande a été enregistrée. Le secrétariat la confirmera.",
     "openCabinet": "Ouvrir l'espace cabinet",
     "reminder": "Aperçu du rappel WhatsApp",
-    "reminderBody": "Bonjour {name}, rappel de votre rendez-vous le {date} à {time} chez {clinic}."
+    "reminderBody": "Bonjour {name}, rappel de votre rendez-vous le {date} à {time} chez {clinic}.",
+    "replyHint": "Le patient répond en un mot. L'agenda se met à jour."
+  },
+  "Reminder": {
+    "title": "Rappel WhatsApp de demain",
+    "subtitle": "Le message que le patient reçoit, en français et en arabe. Sa réponse met l'agenda à jour.",
+    "empty": "Aucun rendez-vous à rappeler.",
+    "french": "Français",
+    "arabic": "Arabe",
+    "confirm": "1 — Confirmer",
+    "cancel": "2 — Annuler",
+    "confirmed": "Le patient a confirmé. Le rendez-vous est confirmé dans l'agenda.",
+    "cancelled": "Le patient a annulé. Le créneau est libéré dans l'agenda.",
+    "frBody": "Bonjour {patient}, rappel de {clinic} : votre rendez-vous est le {date} à {time}. Répondez 1 pour confirmer ou 2 pour annuler.",
+    "arBody": "مرحبا {patient}، تذكير من {clinic}: موعدكم يوم {date} على الساعة {time}. أرسلوا 1 للتأكيد أو 2 للإلغاء."
+  },
+  "Offer": {
+    "activate": "Activer pour mon cabinet",
+    "sticky": "Essai 30 jours. Vous ne payez que si ça marche.",
+    "title": "Pour votre cabinet",
+    "subtitle": "On installe l'agenda et la liste des patients, et on forme la secrétaire en 15 minutes. Gratuit.",
+    "month": "2 500 DA / mois",
+    "year": "20 000 DA / an",
+    "yearHint": "Comme une licence payée une fois, que les cabinets connaissent déjà.",
+    "pilot": "30 jours d'essai. Vous payez seulement si les rappels et les relances ont servi.",
+    "pay": "CIB et Edahabia via Chargily, ou CCP, ou espèces.",
+    "report": "Chaque semaine, un récapitulatif WhatsApp : rappels envoyés, confirmés, et dinars d'impayés relancés.",
+    "data": "Cette démonstration reste sur votre téléphone : rien n'est envoyé. Pour un vrai cabinet, les dossiers sont hébergés en Algérie, conformément à la loi 18-07, avant la mise en service.",
+    "whatsappText": "Bonjour, je veux activer DentaPulse pour {clinic}. Essai 30 jours, je ne paie que si ça marche."
+  },
+  "NotFound": {
+    "title": "Page introuvable",
+    "body": "Cette adresse ne correspond à aucune page du cabinet.",
+    "home": "Retour au tableau de bord"
   },
   "Odontogram": {
     "upper": "Arcade supérieure",

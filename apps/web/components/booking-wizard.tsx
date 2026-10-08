@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  algiersIsoDay,
-  formatDA,
-  formatDate,
-  formatTime,
-  renderReminderMessage,
-} from "@dentapulse/shared";
+import { algiersIsoDay, formatDA, formatDate, formatTime } from "@dentapulse/shared";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -34,11 +28,15 @@ export function BookingWizard({
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
   const slots = useMemo(() => {
     if (!procedureId || !ready) return [];
     try {
-      return actions.listAvailability(procedureId, day);
+      const now = Date.now();
+      return actions.listAvailability(procedureId, day).filter((slot) => {
+        return new Date(slot.start).getTime() > now;
+      });
     } catch {
       return [];
     }
@@ -46,22 +44,53 @@ export function BookingWizard({
 
   if (!ready) return <div className="min-h-96" />;
 
-  if (done) {
-    const reminder = renderReminderMessage("whatsapp", "24h", {
-      clinicName,
-      doctorName,
-      patientName: fullName,
-      date: formatDate(new Date(slotStart)),
-      time: formatTime(new Date(slotStart)),
-      address,
-    });
+  if (done && appointmentId) {
+    const appointment = state.appointments.find((row) => row.id === appointmentId);
+    const when = appointment ? new Date(appointment.start) : new Date(slotStart);
+    const vars = {
+      patient: fullName,
+      clinic: clinicName,
+      date: formatDate(when),
+      time: formatTime(when),
+    };
     return (
       <Card className="mx-auto w-full max-w-xl">
         <p className="text-sm font-medium text-emerald-700">{t("Booking.success")}</p>
-        <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
-          <p className="font-medium text-zinc-950">{t("Booking.reminder")}</p>
-          <p className="mt-2 leading-6">{reminder}</p>
+        <p className="mt-2 text-sm text-zinc-700">
+          {clinicName}
+          {doctorName ? ` · ${doctorName}` : ""}
+        </p>
+        {address ? <p className="text-sm text-zinc-500">{address}</p> : null}
+        <p className="mt-2 text-sm text-zinc-600">{t("Booking.replyHint")}</p>
+        <div className="mt-4 grid gap-3">
+          <div className="rounded-2xl bg-[#e7f7ef] px-4 py-3 text-sm leading-6" dir="ltr">
+            <p className="text-xs font-semibold text-[#075e54]">{t("Reminder.french")}</p>
+            <p className="mt-2">{t("Reminder.frBody", vars)}</p>
+          </div>
+          <div
+            className="rounded-2xl bg-[#e7f7ef] px-4 py-3 font-[family-name:var(--font-arabic)] text-sm leading-6"
+            dir="rtl"
+          >
+            <p className="text-xs font-semibold text-[#075e54]">{t("Reminder.arabic")}</p>
+            <p className="mt-2">{t("Reminder.arBody", vars)}</p>
+          </div>
         </div>
+        {appointment && appointment.status !== "cancelled" && appointment.status !== "completed" ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              onClick={() => actions.updateAppointment(appointment.id, { status: "confirmed" })}
+              disabled={appointment.status === "confirmed"}
+            >
+              {t("Reminder.confirm")}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => actions.updateAppointment(appointment.id, { status: "cancelled" })}
+            >
+              {t("Reminder.cancel")}
+            </Button>
+          </div>
+        ) : null}
         <Link
           href="/"
           className="mt-6 inline-flex text-sm font-medium text-teal-800 hover:text-teal-950"
@@ -160,13 +189,14 @@ export function BookingWizard({
               return;
             }
             try {
-              actions.bookPublic({
+              const created = actions.bookPublic({
                 procedureId,
                 dentistId: dentist.id,
                 start: slotStart,
                 fullName,
                 phone,
               });
+              setAppointmentId(created.id);
               setDone(true);
             } catch (caught) {
               setError(t(`Errors.${errorMessageKey(caught)}`));

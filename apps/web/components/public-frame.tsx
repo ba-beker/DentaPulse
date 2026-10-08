@@ -25,7 +25,7 @@ export function PublicFrame({
   const place = [address, commune].filter(Boolean).join(", ");
 
   return (
-    <div className="min-h-[calc(100vh-3.25rem)]">
+    <div className="min-h-[calc(100vh-3.25rem)] min-w-0 overflow-x-clip pb-24">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-start lg:px-6 lg:py-16">
         <div>
           <div className="flex items-center gap-3">
@@ -35,8 +35,12 @@ export function PublicFrame({
           <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
             {t("eyebrow")}
           </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-zinc-950">{name}</h1>
-          <p className="mt-2 text-lg text-zinc-700">{doctorName}</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-pretty break-words text-zinc-950 sm:text-4xl">
+            {name}
+          </h1>
+          {doctorName ? (
+            <p className="mt-2 text-lg text-pretty break-words text-zinc-700">{doctorName}</p>
+          ) : null}
           {place ? (
             <p className="mt-4 flex items-start gap-2 text-sm text-zinc-600">
               <MapPin className="mt-0.5 size-4 shrink-0 text-teal-700" aria-hidden />

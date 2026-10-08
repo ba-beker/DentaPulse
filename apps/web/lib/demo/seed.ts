@@ -12,12 +12,9 @@ import {
   DEMO_CLINIC_SLUG,
   DEMO_DOCTOR_NAME,
   DEMO_EXAMPLE_PROCEDURE_PRICES,
-  DEMO_FIRST_NAMES,
-  DEMO_LAST_NAMES,
   DEMO_RISK_COMBOS,
   DEMO_USER_EMAILS,
   DEMO_USER_NAMES,
-  DEMO_WILAYAS,
   defaultConsumableTemplates,
   defaultProcedureTemplates,
   demoSuppliers,
@@ -98,6 +95,43 @@ function teethForPatient(index: number): ToothStateRecord[] {
   return teeth;
 }
 
+const CHART_CONDITION_BY_CODE: Partial<Record<string, ToothCondition>> = {
+  EXTRACT_SIMPLE: "missing",
+  EXTRACT_CHIR: "missing",
+  OBTURATION: "filling",
+  COURONNE: "crown",
+  DEVITALISATION: "endodontic",
+  IMPLANT: "implant",
+  PULPOTOMIE: "endodontic",
+};
+
+/** An extraction on the chart must not stay "healthy". Later care (implant, crown) wins. */
+function syncChartsWithRecords(
+  charts: ChartRecord[],
+  records: ClinicalRecord[],
+  procedureById: Map<string, ProcedureRecord>,
+): void {
+  const chartByPatient = new Map(charts.map((chart) => [chart.patientId, chart]));
+  const ordered = [...records].sort((a, b) => a.performedAt.localeCompare(b.performedAt));
+  for (const record of ordered) {
+    if (record.toothNumber === undefined) continue;
+    const code = procedureById.get(record.procedureId)?.code;
+    const condition = code ? CHART_CONDITION_BY_CODE[code] : undefined;
+    if (!condition) continue;
+    const chart = chartByPatient.get(record.patientId);
+    if (!chart) continue;
+    const existing = chart.teeth.find((tooth) => tooth.fdi === record.toothNumber);
+    const surfaces =
+      condition === "caries" || condition === "filling" ? { O: condition, M: condition } : {};
+    if (existing) {
+      existing.wholeCondition = condition;
+      existing.surfaces = surfaces;
+    } else {
+      chart.teeth.push({ fdi: record.toothNumber, wholeCondition: condition, surfaces });
+    }
+  }
+}
+
 function nextWorkingSlot(base: Date, slotIndex: number): { start: Date; end: Date } {
   const start = new Date(base);
   start.setHours(0, 0, 0, 0);
@@ -122,20 +156,115 @@ function buildDrugs(): DrugRecord[] {
   }));
 }
 
+const PATIENT_NAMES = [
+  "Amina Benali",
+  "Karim Meziani",
+  "Yasmine Khelifi",
+  "Mehdi Saïdi",
+  "Salima Boudiaf",
+  "Nadir Hamidi",
+  "Lina Cherif",
+  "Riad Mansouri",
+  "Samira Bensaïd",
+  "Farid Hadji",
+  "Inès Ouahab",
+  "Hocine Ziani",
+  "Djamila Belkacem",
+  "Sofiane Taleb",
+  "Nora Rahmani",
+  "Malik Slimani",
+  "Sabrina Ferhat",
+  "Amine Amrani",
+  "Leïla Bouzid",
+  "Bilal Larbi",
+  "Widad Cherifi",
+  "Youcef Bensalah",
+  "Nawel Kaci",
+  "Adel Boualem",
+  "Meriem Guessoum",
+  "Tarek Mebarki",
+  "Asma Benyelles",
+  "Reda Hamza",
+  "Ikram Belarbi",
+  "Omar Djemai",
+  "Houda Senoussi",
+  "Anis Bouchareb",
+  "Fatiha Medjahdi",
+  "Walid Kerouaz",
+  "Rim Aït Ahmed",
+  "Khaled Bensmain",
+  "Sihem Gherbi",
+  "Mourad Belhadj",
+  "Lamia Zeroual",
+  "Hakim Boudjemaa",
+] as const;
+
+/** Real communes. El Amria is in Aïn Témouchent (46), not Oran (31). */
+const PATIENT_PLACES = [
+  { wilaya: 46, commune: "El Amria" },
+  { wilaya: 46, commune: "Aïn Témouchent" },
+  { wilaya: 46, commune: "Beni Saf" },
+  { wilaya: 46, commune: "Hammam Bou Hadjar" },
+  { wilaya: 46, commune: "El Malah" },
+  { wilaya: 46, commune: "Aïn El Arbaa" },
+  { wilaya: 46, commune: "El Amria" },
+  { wilaya: 31, commune: "Bir El Djir" },
+  { wilaya: 31, commune: "Es Sénia" },
+  { wilaya: 31, commune: "Aïn El Turk" },
+] as const;
+
+const MOBILE_PREFIXES = [
+  "555",
+  "556",
+  "561",
+  "570",
+  "661",
+  "662",
+  "670",
+  "676",
+  "697",
+  "770",
+  "771",
+  "779",
+  "791",
+  "793",
+  "541",
+  "549",
+  "657",
+  "666",
+  "797",
+  "540",
+] as const;
+
+function demoPhone(index: number): string {
+  const prefix = MOBILE_PREFIXES[index % MOBILE_PREFIXES.length] ?? "555";
+  const a = String((index * 37 + 18) % 100).padStart(2, "0");
+  const b = String((index * 13 + 41) % 100).padStart(2, "0");
+  const c = String((index * 17 + 63) % 100).padStart(2, "0");
+  return `+213${prefix}${a}${b}${c}`;
+}
+
 function buildPatients(): PatientRecord[] {
   const createdAt = new Date().toISOString();
   const patients: PatientRecord[] = [];
-  for (let index = 0; index < 40; index += 1) {
-    const first = DEMO_FIRST_NAMES[index % DEMO_FIRST_NAMES.length] ?? "Demo";
-    const last = DEMO_LAST_NAMES[(index * 7) % DEMO_LAST_NAMES.length] ?? "Patient";
-    const seq = String(index + 1).padStart(2, "0");
+  const seenNames = new Set<string>();
+  const seenPhones = new Set<string>();
+  for (let index = 0; index < PATIENT_NAMES.length; index += 1) {
+    const fullName = PATIENT_NAMES[index] ?? "Patient";
+    const phone = demoPhone(index);
+    if (seenNames.has(fullName) || seenPhones.has(phone)) {
+      throw new Error(`Donnée de démo en double : ${fullName} / ${phone}`);
+    }
+    seenNames.add(fullName);
+    seenPhones.add(phone);
+    const place = PATIENT_PLACES[index % PATIENT_PLACES.length] ?? PATIENT_PLACES[0];
     patients.push({
       id: seededId(ID_BUCKET.patient, index + 1),
-      fullName: `${first} ${last}`,
-      phone: `+213555${seq}2345`,
-      wilaya: DEMO_WILAYAS[index % DEMO_WILAYAS.length] ?? 31,
-      commune: index % 2 === 0 ? "El Amria" : "Centre-ville",
-      preferredLanguage: "fr",
+      fullName,
+      phone,
+      wilaya: place.wilaya,
+      commune: place.commune,
+      preferredLanguage: index % 3 === 0 ? "ar" : "fr",
       riskTags: [...(DEMO_RISK_COMBOS[index % DEMO_RISK_COMBOS.length] ?? [])],
       allergies: index % 5 === 0 ? ["Pénicilline (déclaratif démo)"] : [],
       createdAt,
@@ -208,14 +337,15 @@ function buildTreatmentPlans(
     },
     {
       patientIndex: 5,
+      createdDaysAgo: 120,
       lines: [
         { code: "IMPLANT", tooth: 46, price: 80_000 },
         { code: "DETARTRAGE", price: 3_000 },
       ],
       discount: 0,
       installments: [
-        { number: 1, amount: 40_000, dueDays: 0 },
-        { number: 2, amount: 43_000, dueDays: 90 },
+        { number: 1, amount: 40_000, dueDays: -30 },
+        { number: 2, amount: 43_000, dueDays: 60 },
       ],
     },
   ] as const;
@@ -249,7 +379,9 @@ function buildTreatmentPlans(
         items,
         discount: config.discount,
         total: sum - config.discount,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(
+          Date.now() - ("createdDaysAgo" in config ? config.createdDaysAgo : 0) * 86_400_000,
+        ).toISOString(),
         installments: config.installments.map((row) => ({
           number: row.number,
           amount: row.amount,
@@ -303,6 +435,7 @@ export function createDemoSeed(): DemoState {
   }));
 
   const procedureByCode = new Map(procedures.map((row) => [row.code, row]));
+  const procedureById = new Map(procedures.map((row) => [row.id, row]));
   const patients = buildPatients();
 
   const charts: ChartRecord[] = patients.map((patient, index) => ({
@@ -335,6 +468,21 @@ export function createDemoSeed(): DemoState {
     });
   }
 
+  const recallIndexes = new Set([5, 8, 12]);
+  const recallIds = new Set(
+    [...recallIndexes]
+      .map((index) => patients[index]?.id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  for (const record of clinicalRecords) {
+    if (!recallIds.has(record.patientId)) continue;
+    const performedAt = new Date();
+    performedAt.setDate(performedAt.getDate() - 200);
+    performedAt.setHours(10, 0, 0, 0);
+    record.performedAt = performedAt.toISOString();
+  }
+  syncChartsWithRecords(charts, clinicalRecords, procedureById);
+
   const treatmentPlans = buildTreatmentPlans(patients, procedureByCode, dentist.id);
   const firstPlan = treatmentPlans[0];
 
@@ -348,6 +496,7 @@ export function createDemoSeed(): DemoState {
   const base = new Date();
   base.setHours(0, 0, 0, 0);
   for (let index = 0; index < APPOINTMENT_TARGET; index += 1) {
+    if (recallIndexes.has(index)) continue;
     const patient = patients[index % patients.length];
     const procedure = rotation[index % rotation.length];
     if (!patient || !procedure) continue;
@@ -415,7 +564,7 @@ export function createDemoSeed(): DemoState {
       name: DEMO_CLINIC_NAME,
       doctorName: DEMO_DOCTOR_NAME,
       address: "12 rue des Frères Bouadou",
-      wilaya: 31,
+      wilaya: 46,
       commune: "El Amria",
       phone: "+2137700555123",
       whatsapp: "+2137700555123",

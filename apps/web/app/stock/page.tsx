@@ -27,6 +27,7 @@ import {
   trClass,
 } from "../../components/ui";
 import { useDemo } from "../../lib/demo/context";
+import { QuantityText } from "../../components/quantity";
 import { errorMessageKey } from "../../lib/demo/errors";
 import type { ConsumableRecord } from "../../lib/demo/types";
 
@@ -94,7 +95,7 @@ export default function StockPage() {
                     <p className="text-xs text-zinc-500">{row.category}</p>
                   </td>
                   <td className={`${tdClass} tabular-nums`}>
-                    {row.currentStock} {row.unit}
+                    <QuantityText count={row.currentStock} unit={row.unit} />
                   </td>
                   <td className={`${tdClass} tabular-nums`}>{row.minStockAlert}</td>
                   <td className={tdClass}>
@@ -188,7 +189,7 @@ function AdjustForm({ item, onDone }: { item: ConsumableRecord; onDone: () => vo
     >
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       <p className="text-sm text-zinc-600">
-        {item.name} · {item.currentStock} {item.unit}
+        {item.name} · <QuantityText count={item.currentStock} unit={item.unit} />
       </p>
       <Field label={t("Stock.delta")}>
         <TextInput value={delta} onChange={(event) => setDelta(event.target.value)} />
